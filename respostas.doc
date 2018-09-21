@@ -1,0 +1,36 @@
+Qual o objetivo do comando cache em Spark?
+R:
+
+O mesmo código implementado em Spark é normalmente mais rápido que a implementação equivalente em MapReduce. Por quê?
+R:
+
+Qual é a função do SparkContext?
+R:
+
+Explique com suas palavras o que é Resilient Distributed Datasets (RDD).
+R:
+
+GroupByKey é menos eficiente que reduceByKey em grandes dataset. Por quê?
+R:
+
+Explique o que o código Scala abaixo faz.
+val textFile = sc . textFile ( "hdfs://..." )
+val counts = textFile . flatMap ( line => line . split ( " " ))
+. map ( word => ( word , 1 ))
+. reduceByKey ( _ + _ )
+counts.saveAsTextFile ( "hdfs://..." )
+
+R:
+val textFile = sc.textFile ( "hdfs://..." )
+Lê um dataset em algum caminho “hdfs” e cria um RDD
+ 
+val counts = textFile.flatMap (line => line.split ( " " ))
+. map (word => ( word , 1 ))
+. reduceByKey ( _ + _ )
+Com as palavras encontradas no dataset textFile (RDD), faz uma transformação para criar um novo dataset counts do tipo chave(String) valor(Int). Essa transformação soma a quantidade de vezes que uma palavra aparece no dataset.
+
+counts.saveAsTextFile ( "hdfs://..." )
+Salva o resultado das tranformações anteriores em algum caminho “hdfs” de forma particionada.
+
+
+
