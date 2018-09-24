@@ -30,7 +30,7 @@ val counts = textFile.flatMap (line => line.split ( " " ))
 Com as palavras encontradas no dataset textFile (RDD), faz uma transformação para criar um novo dataset counts do tipo chave(String) valor(Int). Essa transformação soma a quantidade de vezes que uma palavra aparece no dataset.
 
 counts.saveAsTextFile ( "hdfs://..." )
-Salva o resultado das tranformações anteriores em algum caminho “hdfs” de forma particionada.
+Salva o resultado das transformações anteriores em algum caminho “hdfs” de forma particionada.
 
-
+Exemplo de código funcionando no caminho  
 
