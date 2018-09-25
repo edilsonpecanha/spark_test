@@ -1,17 +1,24 @@
 Qual o objetivo do comando cache em Spark?
-R:
+R:Cache é uma técnica de otimização em memória, que ajuda a salvar os resultados parciais para caso seja necessário a reutilização desses resultados posteriormente. O cache é muito útil quando os dados são acessados repetidamente. 
 
 O mesmo código implementado em Spark é normalmente mais rápido que a implementação equivalente em MapReduce. Por quê?
-R:
+R: Spark utiliza a memória para executar as operações em um conjunto de dados. A utilização do cache diminui a necessidade de leitura e escrita em disco.
+O MapReduce utiliza a escrita e leitura em disco para executar os jobs, aumentando a lentidão no processo.
 
 Qual é a função do SparkContext?
-R:
+R:É o objeto que faz a conexão do Spark ao programa que está sendo desenvolvido. Funciona como um cliente onde, por exemplo, configurações de alocação de memória e processadores, nome da aplicação e executors podem ser informados.
 
 Explique com suas palavras o que é Resilient Distributed Datasets (RDD).
-R:
+R: Os RDDs são uma abstração imutável (somente leitura) fornecida pelo Spark, para manipulação de dados em memória distribuída. 
+Resilient quer dizer que são tolerantes a falha, ou seja, recuperam parte dos dados perdidos após uma falha em algum nó do cluster.
+Distributed quer dizer que os dados podem ser divididos em vários nós do cluster.
+Datasets vem do fato das coleções de dados ser particionados com valores primitivos, tuplas e outros tipos de objetos.
+ 
 
 GroupByKey é menos eficiente que reduceByKey em grandes dataset. Por quê?
-R:
+R: O GroupByKey no inicio do seu processo, embaralha os dados na rede, para formar uma chave e uma lista de valores. Quando a lista de valores combinados é muito grande para ocupar uma partição, o processo acaba precisando fazer escrita em disco.
+Diferente do GroupByKey, reduceByKey não embaralha os dados no início do processo. O Spark sabe que a operação de redução pode ser aplicada na mesma partição primeiro, somente o resultado da função de redução é embaralhado na rede. Isso causa uma redução significativa no tráfego pela rede. O único problema é que os valores para cada chave tem que ser do mesmo tipo de dados. Se forem tipos de dados diferentes, ele deve ser convertido. Essa desvantagem pode ser resolvida usando o combineByKey.
+
 
 Explique o que o código Scala abaixo faz.
 val textFile = sc . textFile ( "hdfs://..." )
@@ -27,10 +34,7 @@ Lê um dataset em algum caminho “hdfs” e cria um RDD
 val counts = textFile.flatMap (line => line.split ( " " ))
 . map (word => ( word , 1 ))
 . reduceByKey ( _ + _ )
-Com as palavras encontradas no dataset textFile (RDD), faz uma transformação para criar um novo dataset counts do tipo chave(String) valor(Int). Essa transformação soma a quantidade de vezes que uma palavra aparece no dataset.
+Com as palavras encontradas no dataset textFile (RDD), faz uma transformação para criar um novo dataset counts do tipo chave(String) valor(Int). Essa redução soma a quantidade de vezes que uma palavra aparece no dataset.
 
 counts.saveAsTextFile ( "hdfs://..." )
 Salva o resultado das transformações anteriores em algum caminho “hdfs” de forma particionada.
-
-Exemplo de código funcionando no caminho  
-

@@ -1,9 +1,10 @@
 package com.spark_test.nasa_log
 
 import java.nio.charset.StandardCharsets
+import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
+import java.util.{Date, Locale}
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
@@ -39,11 +40,15 @@ object NasaLog {
     val dataSetJul = spark.read.option("charset", StandardCharsets.US_ASCII.name()).textFile(appDir + "/datasets/NASA_access_log_Jul95.gz").toDF("log")
     val dataSetAug = spark.read.option("charset", StandardCharsets.US_ASCII.name()).textFile(appDir + "/datasets/NASA_access_log_Aug95.gz").toDF("log")
 
+    //Une os datasets
     val dataSetUnion = dataSetJul.union(dataSetAug)
 
+    //Coloca o dataset em cache para que as operações repetidas fiquem mais rápidas
     dataSetUnion.cache()
 
-    val patternStr = """^([^ ]+) - - \[([^\]]+)\] "(.*?)" (\d+) (\S+).*"""
+    //Padrão em regex para a divisão em colunas do dataset
+    val patternStr =
+      """^([^ ]+) - - \[([^\]]+)\] "(.*?)" (\d+) (\S+).*"""
     val df1 = dataSetUnion
       .withColumn("host", regexp_extract(col("log"), patternStr, 1))
       .withColumn("timestamp", getFormattedDateUdf(regexp_extract(col("log"), patternStr, 2)))
@@ -51,36 +56,39 @@ object NasaLog {
       .withColumn("statuscode", regexp_extract(col("log"), patternStr, 4))
       .withColumn("totalbytes", toLongUdf(regexp_extract(col("log"), patternStr, 5)))
 
-    //print(df1.schema)
+    df1.show(10)
 
+    print(df1.schema)
+
+    //Remove a coluna original log
     val df2 = df1.drop(col("log")) //.sort(asc("timestamp"))
 
+    //Cálculo de host únicos
     println(s"Total de hosts unicos: ${df2.select(col = "host").distinct().count()}")
 
+    //Cálculo de erros 404
     println(s"Total de erros 404: ${df2.filter(col("statuscode") === 404).count()}")
 
-    val urls404 = df2.filter(col("statuscode") === 404).select(col("request"))
+    //Cria um RDD somente com os dados que tiverem statuscode 404
+    val dataset404 = df2.filter(col("statuscode") === 404).select(col("*")).rdd
 
-    val countUrls404 = urls404.select(col("*")).rdd
-
-    val countUrls404Reduce = countUrls404
-      .map(r => (r, 1))
+    //Pega somente as 5 url com mais erros 404
+    val topFive404 = dataset404
+      .map(r => (r.getString(2), 1))
       .reduceByKey(_ + _)
-
-    val topFive404 = countUrls404Reduce
       .sortBy(r => r._2, ascending = false)
       .take(5)
 
     println(s"\nAs 5 urls com mais erros 404: \n${topFive404.mkString("\n")}\n")
 
-    val erro404ByDate = df2.filter(col("statuscode") === 404).select(col("timestamp")).rdd
-
-    val countErro404ByDate = erro404ByDate
-      .map(r => (r, 1))
+    //Exibe o somatório do Erro 404 por dia
+    val countErro404ByDate = dataset404
+      .map(r => (r.getString(1), 1))
       .reduceByKey(_ + _)
 
     println(s"\nErros 404 por dia: \n${countErro404ByDate.collect().mkString("\n")}\n")
 
+    //Soma a quantidade de bytes
     val totalBytesDF = df2.agg(sum(col("totalbytes"))).first.get(0)
 
     println(s"Total de bytes: $totalBytesDF")
