@@ -1,10 +1,9 @@
 package com.spark_test.nasa_log
 
 import java.nio.charset.StandardCharsets
-import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.{Date, Locale}
+import java.util.Locale
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
@@ -55,10 +54,6 @@ object NasaLog {
       .withColumn("request", getUrlUdf(regexp_extract(col("log"), patternStr, 3)))
       .withColumn("statuscode", regexp_extract(col("log"), patternStr, 4))
       .withColumn("totalbytes", toLongUdf(regexp_extract(col("log"), patternStr, 5)))
-
-    df1.show(10)
-
-    print(df1.schema)
 
     //Remove a coluna original log
     val df2 = df1.drop(col("log")) //.sort(asc("timestamp"))
